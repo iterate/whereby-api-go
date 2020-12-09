@@ -11,11 +11,22 @@ go get github.com/iterate/whereby-api-go
 ## Usage
 
 ```go
-wb := whereby.NewClient("my-api-key")
-meeting, err := wb.CreateMeeting(whereby.CreateMeetingInput{
-    Start: time.Now(),
-    End:   time.Now().Add(time.Hour),
-})
+package main
+
+import (
+	"github.com/iterate/whereby-api-go"
+)
+
+func main() {
+    wb := whereby.NewClient("my-api-key")
+    meeting, err := wb.CreateMeeting(whereby.CreateMeetingInput{
+        Start: time.Now(),
+        End:   time.Now().Add(time.Hour),
+    })
+    
+    fmt.Println(meeting.URL)
+}
+
 ```
 
 ## Legal

@@ -113,5 +113,9 @@ func validateCreateMeetingInput(input CreateMeetingInput) error {
 		return errors.New(`room name prefix must begin with a slash ("/")`)
 	}
 
+	if input.Start.IsZero() || input.End.IsZero() {
+		return errors.New("both start and end times must be specified")
+	}
+
 	return nil
 }
