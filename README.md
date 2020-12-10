@@ -32,4 +32,4 @@ func main() {
 ## Legal
 Copyright (C) Mindcare AS.
 
-Unauthorized use, copying or distribution of this library, via any medium, is strictly prohibited.
+Licensed under the [MIT license](LICENSE.txt).
