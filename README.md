@@ -30,6 +30,8 @@ func main() {
 ```
 
 ## Legal
-Copyright (C) Mindcare AS.
+Copyright (c) 2020 Mindcare AS.
+
+Developed by [Iterate](https://iterate.no).
 
 Licensed under the [MIT license](LICENSE.txt).
