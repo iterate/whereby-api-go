@@ -1,0 +1,13 @@
+root = true
+
+[*]
+charset = utf-8
+
+[{*.go, *.go2}]
+indent_style = tab
+insert_final_newline = true
+
+[{*.yaml, *.yml}]
+indent_style = space
+indent_size = 2
+insert_final_newline = true

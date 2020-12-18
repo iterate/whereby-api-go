@@ -1,0 +1,37 @@
+name: Go tests
+
+# Run on pretty much every event.
+on: [ push, pull_request ]
+
+jobs:
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+
+    # Use a container to get a predictable environment.
+    container: golang:alpine
+
+    env:
+      # Disable CGO to avoid errors due to using an alpine container.
+      CGO_ENABLED: "0"
+
+    steps:
+
+      # "Default" GitHub action for checking out the current repository.
+      - name: Check out the code
+        uses: actions/checkout@v2
+
+      # Fetch all dependencies:
+      #
+      # > The -t flag instructs get to consider modules needed to build tests of
+      # > packages specified on the command line.
+      #
+      # > The -d flag instructs get to download the source code needed to build
+      # > the named packages, including downloading necessary dependencies,
+      # > but not to build and install them.
+      - name: Get dependencies
+        run: go get -v -t -d ./...
+
+      # Run all tests.
+      - name: Test
+        run: go test -v ./...
