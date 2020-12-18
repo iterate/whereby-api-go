@@ -32,14 +32,6 @@ jobs:
       - name: Get dependencies
         run: go get -v -t -d ./...
 
-      # Check that the packages can be built:
-      #
-      # > When compiling multiple packages or a single non-main package,
-      # > build compiles the packages but discards the resulting object,
-      # > serving only as a check that the packages can be built.
-      - name: Build
-        run: go build -v ./...
-
       # Run all tests.
       - name: Test
         run: go test -v ./...
