@@ -2,6 +2,8 @@
 
 A [Whereby](https://whereby.com/) API client for Go.
 
+See the [pkg.go.dev](https://pkg.go.dev/github.com/iterate/whereby-api-go) for more documentation for this module. 
+
 ## Installation
 
 ```bash
