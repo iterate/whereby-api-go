@@ -1,19 +1,21 @@
-package whereby
+package whereby_test
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
 	"time"
+
+	"github.com/iterate/whereby-api-go"
 )
 
 // Create a meeting and print the URL to stdout
 func ExampleClient_CreateMeeting() {
-	wb := NewClient(os.Getenv("WHEREBY_API_KEY"))
+	wb := whereby.NewClient(os.Getenv("WHEREBY_API_KEY"))
 
-	meeting, err := wb.CreateMeeting(CreateMeetingInput{
-		Start: time.Now(),
-		End:   time.Now().Add(time.Hour),
+	meeting, err := wb.CreateMeeting(context.Background(), whereby.CreateMeetingInput{
+		End: time.Now().Add(time.Hour),
 	})
 
 	if err != nil {
@@ -22,4 +24,3 @@ func ExampleClient_CreateMeeting() {
 
 	fmt.Println(meeting.URL)
 }
-

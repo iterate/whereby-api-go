@@ -11,15 +11,17 @@ import (
 	"time"
 )
 
-type createMeetingInInt struct {
+type createMeetingPayload struct {
 	IsLocked        bool     `json:"isLocked"`
 	RoomNamePrefix  string   `json:"roomNamePrefix,omitempty"`
 	RoomNamePattern string   `json:"roomNamePattern,omitempty"`
 	RoomMode        string   `json:"roomMode,omitempty"`
-	Start           string   `json:"startDate"`
+	Start           string   `json:"startDate,omitempty"`
 	End             string   `json:"endDate"`
 	Fields          []string `json:"fields,omitempty"`
 }
+
+type CreateMeetingOutput = GetMeetingOutput
 
 // CreateMeeting creates a meeting as specified. It will also create a transient
 // room that is guaranteed to be available for specified start and end time.
@@ -27,73 +29,74 @@ type createMeetingInInt struct {
 // automatically deleted. The URL to this room is present in the response.
 //
 // See https://whereby.dev/http-api/#/paths/~1meetings/post for more details.
-func (c *Client) CreateMeeting(input CreateMeetingInput) (*GetMeetingOutput, error) {
-	return c.CreateMeetingWithContext(context.Background(), input)
-}
-
-// CreateMeetingWithContext is the same as CreateMeeting with a user-specified
-// context.
-func (c *Client) CreateMeetingWithContext(ctx context.Context, input CreateMeetingInput) (*GetMeetingOutput, error) {
+func (c *Client) CreateMeeting(ctx context.Context, input CreateMeetingInput) (CreateMeetingOutput, error) {
+	var out CreateMeetingOutput
 	if err := validateCreateMeetingInput(input); err != nil {
-		return nil, err
+		return out, err
 	}
 
 	payload, err := json.Marshal(c.getCreateMeetingInput(input))
 	if err != nil {
-		return nil, fmt.Errorf("failed to encode request body: %w", err)
+		return out, fmt.Errorf("failed to encode request body: %w", err)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, createMeetingEndpoint, bytes.NewBuffer(payload))
 	if err != nil {
-		return nil, fmt.Errorf("failed create request: %w", err)
+		return out, fmt.Errorf("failed create request: %w", err)
 	}
 
 	req.Header.Set("content-type", "application/json")
 	res, err := c.do(req)
 	if err != nil {
-		return nil, fmt.Errorf("failed to make request to the Whereby API: %w", err)
+		return out, fmt.Errorf("failed to make request to the Whereby API: %w", err)
 	}
 
-	if res.StatusCode != http.StatusCreated {
-		return nil, fmt.Errorf("unexpected status %d from Whereby", res.StatusCode)
+	if res.StatusCode < 200 || res.StatusCode > 299 {
+		return out, handleBadStatus(res)
 	}
 
-	var out meeting
-	if err := json.NewDecoder(res.Body).Decode(&out); err != nil {
-		return nil, fmt.Errorf("failed to decode payload from Whereby: %w", err)
+	var innerRes meeting
+	if err := json.NewDecoder(res.Body).Decode(&innerRes); err != nil {
+		return out, fmt.Errorf("failed to decode payload from Whereby: %w", err)
 	}
 
-	return createGetMeetingOutput(out)
+	if err := createGetMeetingOutput(&out, innerRes); err != nil {
+		return out, err
+	}
+
+	return out, nil
 }
 
 // createGetMeetingOutput creates the user-friendly output object from the
 // internal JSON representation.
-func createGetMeetingOutput(in meeting) (*GetMeetingOutput, error) {
-	var out GetMeetingOutput
-
-	out.MeetingID = in.MeetingId
-	out.URL = in.RoomURL
-	out.HostURL = in.HostRoomURL
-
-	start, err := time.Parse(time.RFC3339, in.StartDate)
-	if err != nil {
-		return &out, fmt.Errorf("failed to parse meeting start time %s: %w", in.StartDate, err)
+func createGetMeetingOutput(dst *GetMeetingOutput, src meeting) error {
+	dst.MeetingID = src.MeetingId
+	dst.URL = src.RoomURL
+	if hu := src.HostRoomURL; hu != nil {
+		dst.HostURL = *hu
 	}
-	out.Start = start
 
-	end, err := time.Parse(time.RFC3339, in.EndDate)
-	if err != nil {
-		return &out, fmt.Errorf("failed to parse meeting end time %s: %w", in.EndDate, err)
+	if sd := src.StartDate; sd != nil && *sd != "" {
+		start, err := time.Parse(time.RFC3339, *sd)
+		if err != nil {
+			return err
+		}
+		dst.Start = start
 	}
-	out.End = end
 
-	return &out, nil
+	end, err := time.Parse(time.RFC3339, src.EndDate)
+	if err != nil {
+		return err
+	}
+	dst.End = end
+
+	return nil
 }
 
 // getCreateMeetingInput converts the CreateMeetingInput object into the inner
 // representation for JSON marshalling.
-func (c *Client) getCreateMeetingInput(in CreateMeetingInput) createMeetingInInt {
-	var out createMeetingInInt
+func (c *Client) getCreateMeetingInput(in CreateMeetingInput) createMeetingPayload {
+	var out createMeetingPayload
 	out.IsLocked = in.IsLocked
 	out.RoomNamePrefix = in.RoomNamePrefix
 	out.RoomNamePattern = string(in.RoomNamePattern)
@@ -109,12 +112,14 @@ func (c *Client) getCreateMeetingInput(in CreateMeetingInput) createMeetingInInt
 
 // validateCreateMeetingInput validates the provided CreateMeetingInput.
 func validateCreateMeetingInput(input CreateMeetingInput) error {
-	if input.RoomNamePrefix != "" && !strings.HasPrefix(input.RoomNamePrefix, "/") {
-		return errors.New(`room name prefix must begin with a slash ("/")`)
+	if input.RoomNamePrefix != "" {
+		if strings.ToLower(input.RoomNamePrefix) != input.RoomNamePrefix {
+			return errors.New("room name should be lowercase")
+		}
 	}
 
-	if input.Start.IsZero() || input.End.IsZero() {
-		return errors.New("both start and end times must be specified")
+	if input.End.IsZero() {
+		return errors.New("meeting end time must be specified")
 	}
 
 	return nil

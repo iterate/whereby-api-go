@@ -2,6 +2,7 @@ package whereby
 
 import (
 	"bytes"
+	"context"
 	"io/ioutil"
 	"net/http"
 	"testing"
@@ -21,7 +22,7 @@ func TestClient_CreateMeeting(t *testing.T) {
 		c: httpClient,
 	}
 
-	res, err := c.CreateMeeting(CreateMeetingInput{
+	res, err := c.CreateMeeting(context.Background(), CreateMeetingInput{
 		IsLocked:    true,
 		Start:       mustTimeFunc(t)(time.Parse(time.RFC3339, "2020-05-12T16:42:49Z")),
 		End:         mustTimeFunc(t)(time.Parse(time.RFC3339, "2020-05-12T17:42:49Z")),

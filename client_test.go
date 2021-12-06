@@ -1,6 +1,7 @@
 package whereby
 
 import (
+	"context"
 	"net/http"
 	"testing"
 	"time"
@@ -24,4 +25,11 @@ type mockClient struct {
 
 func (m *mockClient) Do(req *http.Request) (*http.Response, error) {
 	return m.DoFunc(req)
+}
+
+func testContext(t *testing.T) (context.Context, context.CancelFunc) {
+	if ddl, ok := t.Deadline(); ok {
+		return context.WithDeadline(context.Background(), ddl)
+	}
+	return context.WithCancel(context.Background())
 }

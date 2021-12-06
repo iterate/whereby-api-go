@@ -10,6 +10,8 @@ import (
 
 func TestClient_GetMeeting(t *testing.T) {
 	t.Run("With valid request/response", func(t *testing.T) {
+		ctx, ccl := testContext(t)
+		defer ccl()
 		httpClient := &mockClient{DoFunc: func(req *http.Request) (*http.Response, error) {
 			body := `{"meetingId":"1","startDate":"2020-05-12T16:42:49Z","endDate":"2020-05-12T17:42:49Z","roomUrl":"http://example.com","hostRoomUrl":"http://example.com/host-room"}`
 			return &http.Response{
@@ -22,7 +24,7 @@ func TestClient_GetMeeting(t *testing.T) {
 			c: httpClient,
 		}
 
-		res, err := c.GetMeeting("1")
+		res, err := c.GetMeeting(ctx, "1")
 		if err != nil {
 			t.Errorf("want no err; got %v", err)
 		}
@@ -39,6 +41,8 @@ func TestClient_GetMeeting(t *testing.T) {
 	})
 
 	t.Run("With invalid response", func(t *testing.T) {
+		ctx, ccl := testContext(t)
+		defer ccl()
 		httpClient := &mockClient{DoFunc: func(req *http.Request) (*http.Response, error) {
 			body := `{"meetingId":"1","startDate":"2020-05-12T16:42:49Z",`
 			return &http.Response{
@@ -49,7 +53,7 @@ func TestClient_GetMeeting(t *testing.T) {
 		}}
 		c := Client{c: httpClient}
 
-		_, err := c.GetMeeting("1")
+		_, err := c.GetMeeting(ctx, "1")
 		if err == nil {
 			t.Errorf("want err; got %v", err)
 		}

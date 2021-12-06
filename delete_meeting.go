@@ -13,13 +13,7 @@ import (
 //
 // See https://whereby.dev/http-api/#/paths/~1meetings~1{meetingId}/delete for
 // more details.
-func (c *Client) DeleteMeeting(meetingID string) error {
-	return c.DeleteMeetingWithContext(context.Background(), meetingID)
-}
-
-// DeleteMeetingWithContext is the same as DeleteMeeting with a user-specified
-// context.
-func (c *Client) DeleteMeetingWithContext(ctx context.Context, meetingID string) error {
+func (c *Client) DeleteMeeting(ctx context.Context, meetingID string) error {
 	endpoint := strings.Replace(deleteMeetingEndpoint, "{meetingId}", meetingID, -1)
 	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, endpoint, nil)
 	if err != nil {
@@ -31,8 +25,8 @@ func (c *Client) DeleteMeetingWithContext(ctx context.Context, meetingID string)
 		return fmt.Errorf("failed to make request to the Whereby API: %w", err)
 	}
 
-	if res.StatusCode != http.StatusNoContent {
-		return fmt.Errorf("unexpected status %d from Whereby", res.StatusCode)
+	if res.StatusCode < 200 || res.StatusCode > 299 {
+		return handleBadStatus(res)
 	}
 
 	return nil

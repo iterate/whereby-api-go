@@ -1,6 +1,7 @@
 package whereby
 
 import (
+	"context"
 	"net/http"
 	"testing"
 )
@@ -16,7 +17,7 @@ func TestClient_DeleteMeeting(t *testing.T) {
 		c: httpClient,
 	}
 
-	err := c.DeleteMeeting("1")
+	err := c.DeleteMeeting(context.Background(), "1")
 	if err != nil {
 		t.Errorf("want no err; got %v", err)
 	}
